@@ -117,6 +117,13 @@ jobs:
                     MYSQL_PASSWORD: joomla_ut
                     MYSQL_ROOT_PASSWORD: joomla_ut
                     MYSQL_DATABASE: joomla_ut
+                options: >-
+                    --health-cmd="mysqladmin ping -h localhost -u joomla_ut -pjoomla_ut"
+                    --health-interval=20s
+                    --health-start-period=10s
+                    --health-start-interval=10s
+                    --health-timeout=5s
+                    --health-retries=3
 
     tests-unit-mariadb:
         name: Run Unit tests on MariaDB
@@ -126,7 +133,7 @@ jobs:
         strategy:
             matrix:
                 php_version: ['8.3', '8.4', '8.5']
-                db_version: ['10.2', '12']
+                db_version: ['10.2', '11']
         steps:
             - uses: actions/checkout@v6
             - name: Run Unit tests
@@ -142,6 +149,13 @@ jobs:
                     MARIADB_PASSWORD: joomla_ut
                     MARIADB_ROOT_PASSWORD: joomla_ut
                     MARIADB_DATABASE: joomla_ut
+                options: >-
+                    --health-cmd="healthcheck.sh --connect --innodb_initialized"
+                    --health-interval=20s
+                    --health-start-period=10s
+                    --health-start-interval=10s
+                    --health-timeout=5s
+                    --health-retries=3
 
     tests-unit-postgres:
         name: Run Unit tests on PostgreSQL
