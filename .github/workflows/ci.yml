@@ -163,10 +163,9 @@ jobs:
             - name: Run Unit tests
               run: |
                   git config --global --add safe.directory $GITHUB_WORKSPACE
-                  apt-get update
-                  apt-get install -y software-properties-common lsb-release gnupg
-                  curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
-                  echo "deb [arch=amd64,armhf,arm64] https://packages.microsoft.com/ubuntu/22.04/prod jammy main" >> /etc/apt/sources.list
+                  curl -sSL -O https://packages.microsoft.com/config/debian/$(grep VERSION_ID /etc/os-release | cut -d '"' -f 2 | cut -d '.' -f 1)/packages-microsoft-prod.deb
+                  dpkg -i packages-microsoft-prod.deb
+                  rm packages-microsoft-prod.deb
                   apt-get update
                   ACCEPT_EULA=Y apt-get install -y msodbcsql18 unixodbc-dev
                   pecl install sqlsrv && docker-php-ext-enable sqlsrv
