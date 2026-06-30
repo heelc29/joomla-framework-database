@@ -158,6 +158,7 @@ jobs:
         strategy:
             matrix:
                 php_version: ['8.3', '8.4']
+                db_version: ['2017-latest', '2019-latest', '2022-latest', '2025-latest']
         steps:
             - uses: actions/checkout@v4
             - name: Run Unit tests
@@ -176,7 +177,7 @@ jobs:
                   ./vendor/bin/phpunit --configuration phpunit.sqlsrv.xml.dist
         services:
             sqlsrv:
-                image: mcr.microsoft.com/mssql/server:2017-latest
+                image: mcr.microsoft.com/mssql/server:${{ matrix.db_version }}
                 env:
                     ACCEPT_EULA: Y
                     MSSQL_SA_PASSWORD: Password12!
