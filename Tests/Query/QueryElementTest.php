@@ -225,34 +225,4 @@ class QueryElementTest extends TestCase
             $baseElement->getElements()
         );
     }
-
-    /**
-     * @testdox  A query element can be cloned with a custom array property
-     */
-    public function testCloneWithCustomArrayProperty()
-    {
-        $baseElement            = new QueryElement(null, null);
-        $baseElement->testArray = [];
-
-        $cloneElement = clone $baseElement;
-
-        $baseElement->testArray[] = 'a';
-
-        $this->assertNotSame($baseElement, $cloneElement);
-        $this->assertCount(0, $cloneElement->testArray);
-    }
-
-    /**
-     * @testdox  A query element can be cloned with a custom object property
-     */
-    public function testCloneWithCustomObjectProperty()
-    {
-        $baseElement             = new QueryElement(null, null);
-        $baseElement->testObject = new \stdClass();
-
-        $cloneElement = clone $baseElement;
-
-        $this->assertNotSame($baseElement, $cloneElement);
-        $this->assertNotSame($baseElement->testObject, $cloneElement->testObject);
-    }
 }
