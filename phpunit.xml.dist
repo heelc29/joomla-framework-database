@@ -13,7 +13,6 @@
 	</php>
 	<testsuites>
 		<testsuite name="Unit">
-			<directory>Tests/Command</directory>
 			<directory>Tests/Monitor</directory>
 			<directory>Tests/Query</directory>
 			<directory>Tests/Service</directory>
