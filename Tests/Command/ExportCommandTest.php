@@ -49,7 +49,7 @@ class ExportCommandTest extends DatabaseTestCase
 
         parent::setUpBeforeClass();
 
-        if (!static::$connection || static::$connection->getName() !== 'mysql') {
+        if (!static::$connection) {
             self::markTestSkipped('MySQL database not configured.');
         }
     }

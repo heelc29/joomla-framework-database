@@ -31,7 +31,7 @@ class SqlsrvDriverTest extends AbstractDatabaseDriverTestCase
 
         parent::setUpBeforeClass();
 
-        if (!static::$connection || static::$connection->getName() !== 'sqlsrv') {
+        if (!static::$connection) {
             self::markTestSkipped('SQL Server database not configured.');
         }
     }
