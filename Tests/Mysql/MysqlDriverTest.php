@@ -93,11 +93,6 @@ class MysqlDriverTest extends AbstractDatabaseDriverTestCase
      */
     public static function dataGetTableColumns(): array
     {
-        // For unknown reasons, the connection gets lost on Travis. re-establish, if that happens
-        if (static::$connection === null) {
-            self::setUpBeforeClass();
-        }
-
         $isMySQL8        = !static::$connection->isMariaDb() && version_compare(static::$connection->getVersion(), '8.0', '>=');
         $useDisplayWidth = static::$connection->isMariaDb() || version_compare(static::$connection->getVersion(), '8.0.17', '<');
 
