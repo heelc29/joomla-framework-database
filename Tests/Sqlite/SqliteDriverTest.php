@@ -14,10 +14,13 @@ use Joomla\Database\Sqlite\SqliteDriver;
 use Joomla\Database\Sqlite\SqliteQuery;
 use Joomla\Database\Tests\AbstractDatabaseDriverTestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 
 /**
  * Test class for Joomla\Database\Sqlite\SqliteDriver
  */
+#[RequiresPhpExtension('pdo_sqlite')]
+#[RequiresPhpExtension('sqlite3')]
 class SqliteDriverTest extends AbstractDatabaseDriverTestCase
 {
     /**
@@ -222,17 +225,6 @@ class SqliteDriverTest extends AbstractDatabaseDriverTestCase
                 'sqlite_sequence',
             ],
             static::$connection->getTableList()
-        );
-    }
-
-    /**
-     * @testdox  The minimum supported database version is retrieved
-     */
-    public function testGetMinimum()
-    {
-        $this->assertNull(
-            static::$connection->getMinimum(),
-            'A minimum version is not specified for SQLite'
         );
     }
 

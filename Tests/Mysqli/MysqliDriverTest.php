@@ -7,7 +7,6 @@
 namespace Joomla\Database\Tests\Mysqli;
 
 use Joomla\Database\DatabaseDriver;
-use Joomla\Database\DatabaseFactory;
 use Joomla\Database\Exception\ExecutionFailureException;
 use Joomla\Database\Mysqli\MysqliDriver;
 use Joomla\Database\Mysqli\MysqliExporter;
@@ -16,10 +15,12 @@ use Joomla\Database\Mysqli\MysqliQuery;
 use Joomla\Database\ParameterType;
 use Joomla\Database\Tests\AbstractDatabaseDriverTestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 
 /**
  * Test class for Joomla\Database\Mysqli\MysqliDriver
  */
+#[RequiresPhpExtension('mysqli')]
 class MysqliDriverTest extends AbstractDatabaseDriverTestCase
 {
     /**
@@ -111,6 +112,18 @@ class MysqliDriverTest extends AbstractDatabaseDriverTestCase
         $isMySQL8        = !static::$connection->isMariaDb() && version_compare(static::$connection->getVersion(), '8.0', '>=');
         $useDisplayWidth = static::$connection->isMariaDb() || version_compare(static::$connection->getVersion(), '8.0.17', '<');
 
+        $collationText = match (true) {
+            !static::$connection->isMariaDb() && version_compare(static::$connection->getVersion(), '8.0.30', '>=') => 'utf8mb3_general_ci',
+            static::$connection->isMariaDb() && version_compare(static::$connection->getVersion(), '11.5', '>=') => 'utf8mb3_uca1400_ai_ci',
+            static::$connection->isMariaDb() && version_compare(static::$connection->getVersion(), '10.6', '>=') => 'utf8mb3_general_ci',
+            default => 'utf8_general_ci',
+        };
+        $defaultText = match (true) {
+            !static::$connection->isMariaDb() && version_compare(static::$connection->getVersion(), '8.0', '>=') => null,
+            static::$connection->isMariaDb() && version_compare(static::$connection->getVersion(), '11.5', '>=') => null,
+            default => '',
+        };
+
         return [
             'only column types' => [
                 '#__dbtest',
@@ -142,10 +155,10 @@ class MysqliDriverTest extends AbstractDatabaseDriverTestCase
                     'title' => (object) [
                         'Field'      => 'title',
                         'Type'       => 'varchar(50)',
-                        'Collation'  => $isMySQL8 ? 'utf8mb3_general_ci' : 'utf8_general_ci',
+                        'Collation'  => $collationText,
                         'Null'       => 'NO',
                         'Key'        => '',
-                        'Default'    => $isMySQL8 ? null : '',
+                        'Default'    => $defaultText,
                         'Extra'      => '',
                         'Privileges' => 'select,insert,update,references',
                         'Comment'    => '',
@@ -164,10 +177,10 @@ class MysqliDriverTest extends AbstractDatabaseDriverTestCase
                     'description' => (object) [
                         'Field'      => 'description',
                         'Type'       => 'text',
-                        'Collation'  => $isMySQL8 ? 'utf8mb3_general_ci' : 'utf8_general_ci',
+                        'Collation'  => $collationText,
                         'Null'       => 'NO',
                         'Key'        => '',
-                        'Default'    => $isMySQL8 ? null : '',
+                        'Default'    => $defaultText,
                         'Extra'      => '',
                         'Privileges' => 'select,insert,update,references',
                         'Comment'    => '',
@@ -319,7 +332,17 @@ class MysqliDriverTest extends AbstractDatabaseDriverTestCase
             $dbtestPrimaryKey['Cardinality']  = (int) $dbtestPrimaryKey['Cardinality'];
 
             $dbtestPrimaryKey['Visible']    = 'YES';
-            $dbtestPrimaryKey['Expression'] = null;
+            if (version_compare(static::$connection->getVersion(), '8.0.13', '>=')) {
+                $dbtestPrimaryKey['Expression'] = null;
+            }
+
+        // MariaDB 10.6 adds additional data and casts certain keys to integers
+        } elseif (static::$connection->isMariaDb() && version_compare(static::$connection->getVersion(), '10.6', '>=')) {
+            $dbtestPrimaryKey['Non_unique']   = (int) $dbtestPrimaryKey['Non_unique'];
+            $dbtestPrimaryKey['Seq_in_index'] = (int) $dbtestPrimaryKey['Seq_in_index'];
+            $dbtestPrimaryKey['Cardinality']  = (int) $dbtestPrimaryKey['Cardinality'];
+
+            $dbtestPrimaryKey['Ignored'] = 'NO';
         }
 
         $keys = [

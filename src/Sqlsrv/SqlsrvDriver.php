@@ -89,7 +89,7 @@ class SqlsrvDriver extends DatabaseDriver
         $options['database']          = $options['database'] ?? '';
         $options['select']            = isset($options['select']) ? (bool) $options['select'] : true;
         $options['encrypt']           = isset($options['encrypt']) ? (bool) $options['encrypt'] : true;
-        $options['trust_certificate'] = isset($options['trust_certificate']) ? (bool) $options['trust_certificate'] : true;
+        $options['trust_certificate'] = isset($options['trust_certificate']) ? (bool) $options['trust_certificate'] : false;
 
         // Finalize initialisation
         parent::__construct($options);
@@ -403,7 +403,9 @@ class SqlsrvDriver extends DatabaseDriver
         } else {
             // If we want the whole field data object add that to the list.
             foreach ($fields as $field) {
-                $field->Default        = preg_replace("/(^(\(\(|\('|\(N'|\()|(('\)|(?<!\()\)\)|\))$))/i", '', $field->Default);
+                if ($field->Default !== null) {
+                    $field->Default = preg_replace("/(^(\(\(|\('|\(N'|\()|(('\)|(?<!\()\)\)|\))$))/i", '', $field->Default);
+                }
                 $result[$field->Field] = $field;
             }
         }

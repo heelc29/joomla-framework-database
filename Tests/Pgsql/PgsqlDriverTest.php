@@ -6,6 +6,8 @@
 
 namespace Joomla\Database\Tests\Pgsql;
 
+use Joomla\Database\DatabaseDriver;
+use Joomla\Database\Exception\ExecutionFailureException;
 use Joomla\Database\ParameterType;
 use Joomla\Database\Pgsql\PgsqlDriver;
 use Joomla\Database\Pgsql\PgsqlExporter;
@@ -13,10 +15,12 @@ use Joomla\Database\Pgsql\PgsqlImporter;
 use Joomla\Database\Pgsql\PgsqlQuery;
 use Joomla\Database\Tests\AbstractDatabaseDriverTestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 
 /**
  * Test class for Joomla\Database\Pgsql\PgsqlDriver
  */
+#[RequiresPhpExtension('pdo_pgsql')]
 class PgsqlDriverTest extends AbstractDatabaseDriverTestCase
 {
     /**
@@ -34,6 +38,32 @@ class PgsqlDriverTest extends AbstractDatabaseDriverTestCase
     }
 
     /**
+     * Sets up the fixture.
+     *
+     * This method is called before a test is executed.
+     *
+     * @return  void
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        try {
+            foreach (DatabaseDriver::splitSql(file_get_contents(dirname(__DIR__) . '/Stubs/Schema/pgsql.sql')) as $query) {
+                static::$connection->setQuery($query)
+                    ->execute();
+            }
+        } catch (ExecutionFailureException $exception) {
+            $this->markTestSkipped(
+                \sprintf(
+                    'Could not load PostgreSQL database: %s',
+                    $exception->getMessage()
+                )
+            );
+        }
+    }
+
+    /**
      * Tears down the fixture.
      *
      * This method is called after a test is executed.
@@ -41,7 +71,7 @@ class PgsqlDriverTest extends AbstractDatabaseDriverTestCase
     protected function tearDown(): void
     {
         foreach (static::$connection->getTableList() as $table) {
-            static::$connection->truncateTable($table);
+            static::$connection->dropTable($table);
         }
     }
 
