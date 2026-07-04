@@ -40,7 +40,7 @@ class MysqliDriverTest extends AbstractDatabaseDriverTestCase
     {
         parent::setUpBeforeClass();
 
-        if (!static::$connection || static::$connection->getName() !== 'mysqli') {
+        if (!static::$connection) {
             self::markTestSkipped('MySQL database not configured.');
         }
     }
