@@ -109,21 +109,6 @@ class MysqliDriverTest extends AbstractDatabaseDriverTestCase
      */
     public static function dataGetTableColumns(): array
     {
-        $isMySQL8        = !static::$connection->isMariaDb() && version_compare(static::$connection->getVersion(), '8.0', '>=');
-        $useDisplayWidth = static::$connection->isMariaDb() || version_compare(static::$connection->getVersion(), '8.0.17', '<');
-
-        $collationText = match (true) {
-            !static::$connection->isMariaDb() && version_compare(static::$connection->getVersion(), '8.0.30', '>=') => 'utf8mb3_general_ci',
-            static::$connection->isMariaDb() && version_compare(static::$connection->getVersion(), '11.5', '>=') => 'utf8mb3_uca1400_ai_ci',
-            static::$connection->isMariaDb() && version_compare(static::$connection->getVersion(), '10.6', '>=') => 'utf8mb3_general_ci',
-            default => 'utf8_general_ci',
-        };
-        $defaultText = match (true) {
-            !static::$connection->isMariaDb() && version_compare(static::$connection->getVersion(), '8.0', '>=') => null,
-            static::$connection->isMariaDb() && version_compare(static::$connection->getVersion(), '11.5', '>=') => null,
-            default => '',
-        };
-
         return [
             'only column types' => [
                 '#__dbtest',
@@ -143,11 +128,11 @@ class MysqliDriverTest extends AbstractDatabaseDriverTestCase
                 [
                     'id' => (object) [
                         'Field'      => 'id',
-                        'Type'       => $useDisplayWidth ? 'int(10) unsigned' : 'int unsigned',
-                        'Collation'  => $isMySQL8 ? null : '',
+                        'Type'       => '<<<VERSIONDEPENDENT>>>',
+                        'Collation'  => '',
                         'Null'       => 'NO',
                         'Key'        => 'PRI',
-                        'Default'    => $isMySQL8 ? null : '',
+                        'Default'    => '',
                         'Extra'      => 'auto_increment',
                         'Privileges' => 'select,insert,update,references',
                         'Comment'    => '',
@@ -155,10 +140,10 @@ class MysqliDriverTest extends AbstractDatabaseDriverTestCase
                     'title' => (object) [
                         'Field'      => 'title',
                         'Type'       => 'varchar(50)',
-                        'Collation'  => $collationText,
+                        'Collation'  => '<<<VERSIONDEPENDENT>>>',
                         'Null'       => 'NO',
                         'Key'        => '',
-                        'Default'    => $defaultText,
+                        'Default'    => '<<<VERSIONDEPENDENT>>>',
                         'Extra'      => '',
                         'Privileges' => 'select,insert,update,references',
                         'Comment'    => '',
@@ -177,10 +162,10 @@ class MysqliDriverTest extends AbstractDatabaseDriverTestCase
                     'description' => (object) [
                         'Field'      => 'description',
                         'Type'       => 'text',
-                        'Collation'  => $collationText,
+                        'Collation'  => '<<<VERSIONDEPENDENT>>>',
                         'Null'       => 'NO',
                         'Key'        => '',
-                        'Default'    => $defaultText,
+                        'Default'    => '<<<VERSIONDEPENDENT>>>',
                         'Extra'      => '',
                         'Privileges' => 'select,insert,update,references',
                         'Comment'    => '',
@@ -246,6 +231,43 @@ class MysqliDriverTest extends AbstractDatabaseDriverTestCase
     /*
      * Overrides for parent class test cases
      */
+
+    /**
+     * @testdox  Information about the columns of a database table is returned
+     *
+     * @param   string   $table     The name of the database table.
+     * @param   boolean  $typeOnly  True (default) to only return field types.
+     * @param   array    $expected  Expected result.
+     */
+    #[DataProvider('dataGetTableColumns')]
+    public function testGetTableColumns(string $table, bool $typeOnly, array $expected)
+    {
+        if (!$typeOnly) {
+            $isMySQL8        = !static::$connection->isMariaDb() && version_compare(static::$connection->getVersion(), '8.0', '>=');
+            $useDisplayWidth = static::$connection->isMariaDb() || version_compare(static::$connection->getVersion(), '8.0.17', '<');
+
+            $collationText = match (true) {
+                !static::$connection->isMariaDb() && version_compare(static::$connection->getVersion(), '8.0.30', '>=') => 'utf8mb3_general_ci',
+                static::$connection->isMariaDb() && version_compare(static::$connection->getVersion(), '11.5', '>=') => 'utf8mb3_uca1400_ai_ci',
+                static::$connection->isMariaDb() && version_compare(static::$connection->getVersion(), '10.6', '>=') => 'utf8mb3_general_ci',
+                default => 'utf8_general_ci',
+            };
+
+            $defaultText = match (true) {
+                !static::$connection->isMariaDb() && version_compare(static::$connection->getVersion(), '8.0', '>=') => null,
+                static::$connection->isMariaDb() && version_compare(static::$connection->getVersion(), '11.5', '>=') => null,
+                default => '',
+            };
+
+            $expected['id']->Type               = $useDisplayWidth ? 'int(10) unsigned' : 'int unsigned';
+            $expected['title']->Collation       = $collationText;
+            $expected['title']->Default         = $defaultText;
+            $expected['description']->Collation = $collationText;
+            $expected['description']->Default   = $defaultText;
+        }
+
+        parent::testGetTableColumns($table, $typeOnly, $expected);
+    }
 
     /*
      * Test cases for this subclass
