@@ -35,3 +35,5 @@ jobs:
                     MYSQL_PASSWORD: joomla_ut
                     MYSQL_ROOT_PASSWORD: joomla_ut
                     MYSQL_DATABASE: joomla_ut
+                options: >-
+                    --health-cmd="mysqladmin ping -h localhost -u joomla_ut -pjoomla_ut"

@@ -7,7 +7,6 @@
 namespace Joomla\Database\Tests\Mysqli;
 
 use Joomla\Database\DatabaseDriver;
-use Joomla\Database\DatabaseFactory;
 use Joomla\Database\Exception\ExecutionFailureException;
 use Joomla\Database\Mysqli\MysqliDriver;
 use Joomla\Database\Mysqli\MysqliExporter;
@@ -16,10 +15,12 @@ use Joomla\Database\Mysqli\MysqliQuery;
 use Joomla\Database\ParameterType;
 use Joomla\Database\Tests\AbstractDatabaseDriverTestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 
 /**
  * Test class for Joomla\Database\Mysqli\MysqliDriver
  */
+#[RequiresPhpExtension('mysqli')]
 class MysqliDriverTest extends AbstractDatabaseDriverTestCase
 {
     /**
@@ -37,16 +38,9 @@ class MysqliDriverTest extends AbstractDatabaseDriverTestCase
      */
     public static function setUpBeforeClass(): void
     {
-        $host = getenv('JOOMLA_TEST_DB_HOST');
-        $port = getenv('JOOMLA_TEST_DB_PORT') ?: 3306;
-
-        /** @var MysqliDriver $mysqli */
-        $mysqli = (new DatabaseFactory())->getDriver('mysqli');
-        $mysqli->healthCheck($host, $port, 10, 10, 1, 10);
-
         parent::setUpBeforeClass();
 
-        if (!static::$connection || static::$connection->getName() !== 'mysqli') {
+        if (!static::$connection) {
             self::markTestSkipped('MySQL database not configured.');
         }
     }
@@ -115,14 +109,6 @@ class MysqliDriverTest extends AbstractDatabaseDriverTestCase
      */
     public static function dataGetTableColumns(): array
     {
-        // For unknown reasons, the connection gets lost on Travis. re-establish, if that happens
-        if (static::$connection === null) {
-            self::setUpBeforeClass();
-        }
-
-        $isMySQL8        = !static::$connection->isMariaDb() && version_compare(static::$connection->getVersion(), '8.0', '>=');
-        $useDisplayWidth = static::$connection->isMariaDb() || version_compare(static::$connection->getVersion(), '8.0.17', '<');
-
         return [
             'only column types' => [
                 '#__dbtest',
@@ -142,11 +128,11 @@ class MysqliDriverTest extends AbstractDatabaseDriverTestCase
                 [
                     'id' => (object) [
                         'Field'      => 'id',
-                        'Type'       => $useDisplayWidth ? 'int(10) unsigned' : 'int unsigned',
-                        'Collation'  => $isMySQL8 ? null : '',
+                        'Type'       => '<<<variable>>>',
+                        'Collation'  => null,
                         'Null'       => 'NO',
                         'Key'        => 'PRI',
-                        'Default'    => $isMySQL8 ? null : '',
+                        'Default'    => null,
                         'Extra'      => 'auto_increment',
                         'Privileges' => 'select,insert,update,references',
                         'Comment'    => '',
@@ -154,10 +140,10 @@ class MysqliDriverTest extends AbstractDatabaseDriverTestCase
                     'title' => (object) [
                         'Field'      => 'title',
                         'Type'       => 'varchar(50)',
-                        'Collation'  => $isMySQL8 ? 'utf8mb3_general_ci' : 'utf8_general_ci',
+                        'Collation'  => '<<<variable>>>',
                         'Null'       => 'NO',
                         'Key'        => '',
-                        'Default'    => $isMySQL8 ? null : '',
+                        'Default'    => '<<<variable>>>',
                         'Extra'      => '',
                         'Privileges' => 'select,insert,update,references',
                         'Comment'    => '',
@@ -176,10 +162,10 @@ class MysqliDriverTest extends AbstractDatabaseDriverTestCase
                     'description' => (object) [
                         'Field'      => 'description',
                         'Type'       => 'text',
-                        'Collation'  => $isMySQL8 ? 'utf8mb3_general_ci' : 'utf8_general_ci',
+                        'Collation'  => '<<<variable>>>',
                         'Null'       => 'NO',
                         'Key'        => '',
-                        'Default'    => $isMySQL8 ? null : '',
+                        'Default'    => '<<<variable>>>',
                         'Extra'      => '',
                         'Privileges' => 'select,insert,update,references',
                         'Comment'    => '',
@@ -245,6 +231,42 @@ class MysqliDriverTest extends AbstractDatabaseDriverTestCase
     /*
      * Overrides for parent class test cases
      */
+
+    /**
+     * @testdox  Information about the columns of a database table is returned
+     *
+     * @param   string   $table     The name of the database table.
+     * @param   boolean  $typeOnly  True (default) to only return field types.
+     * @param   array    $expected  Expected result.
+     */
+    #[DataProvider('dataGetTableColumns')]
+    public function testGetTableColumns(string $table, bool $typeOnly, array $expected)
+    {
+        if (!$typeOnly) {
+            $useDisplayWidth = static::$connection->isMariaDb() || version_compare(static::$connection->getVersion(), '8.0.17', '<');
+
+            $collationText = match (true) {
+                !static::$connection->isMariaDb() && version_compare(static::$connection->getVersion(), '8.0.30', '>=') => 'utf8mb3_general_ci',
+                static::$connection->isMariaDb() && version_compare(static::$connection->getVersion(), '11.5', '>=') => 'utf8mb3_uca1400_ai_ci',
+                static::$connection->isMariaDb() && version_compare(static::$connection->getVersion(), '10.6', '>=') => 'utf8mb3_general_ci',
+                default => 'utf8_general_ci',
+            };
+
+            $defaultText = match (true) {
+                !static::$connection->isMariaDb() && version_compare(static::$connection->getVersion(), '8.0', '>=') => null,
+                static::$connection->isMariaDb() && version_compare(static::$connection->getVersion(), '11.5', '>=') => null,
+                default => '',
+            };
+
+            $expected['id']->Type               = $useDisplayWidth ? 'int(10) unsigned' : 'int unsigned';
+            $expected['title']->Collation       = $collationText;
+            $expected['title']->Default         = $defaultText;
+            $expected['description']->Collation = $collationText;
+            $expected['description']->Default   = $defaultText;
+        }
+
+        parent::testGetTableColumns($table, $typeOnly, $expected);
+    }
 
     /*
      * Test cases for this subclass
@@ -331,7 +353,17 @@ class MysqliDriverTest extends AbstractDatabaseDriverTestCase
             $dbtestPrimaryKey['Cardinality']  = (int) $dbtestPrimaryKey['Cardinality'];
 
             $dbtestPrimaryKey['Visible']    = 'YES';
-            $dbtestPrimaryKey['Expression'] = null;
+            if (version_compare(static::$connection->getVersion(), '8.0.13', '>=')) {
+                $dbtestPrimaryKey['Expression'] = null;
+            }
+
+        // MariaDB 10.6 adds additional data and casts certain keys to integers
+        } elseif (static::$connection->isMariaDb() && version_compare(static::$connection->getVersion(), '10.6', '>=')) {
+            $dbtestPrimaryKey['Non_unique']   = (int) $dbtestPrimaryKey['Non_unique'];
+            $dbtestPrimaryKey['Seq_in_index'] = (int) $dbtestPrimaryKey['Seq_in_index'];
+            $dbtestPrimaryKey['Cardinality']  = (int) $dbtestPrimaryKey['Cardinality'];
+
+            $dbtestPrimaryKey['Ignored'] = 'NO';
         }
 
         $keys = [
