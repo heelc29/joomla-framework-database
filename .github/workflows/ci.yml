@@ -18,7 +18,7 @@ jobs:
         strategy:
             matrix:
                 php_version: ['8.3', '8.4', '8.5']
-                db_version: ['10.2']
+                db_version: ['10.4', '10.6', '10.11', '11.4', '11.8', '12.3']
         steps:
             - uses: actions/checkout@v6
             - name: Run Unit tests
@@ -34,3 +34,5 @@ jobs:
                     MARIADB_PASSWORD: joomla_ut
                     MARIADB_ROOT_PASSWORD: joomla_ut
                     MARIADB_DATABASE: joomla_ut
+                options: >-
+                    --health-cmd="healthcheck.sh --connect --innodb_initialized"
