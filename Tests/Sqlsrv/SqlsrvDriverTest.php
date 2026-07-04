@@ -14,10 +14,12 @@ use Joomla\Database\Sqlsrv\SqlsrvQuery;
 use Joomla\Database\Tests\AbstractDatabaseDriverTestCase;
 use Joomla\Test\DatabaseManager;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 
 /**
  * Test class for Joomla\Database\Sqlsrv\SqlsrvDriver.
  */
+#[RequiresPhpExtension('sqlsrv')]
 class SqlsrvDriverTest extends AbstractDatabaseDriverTestCase
 {
     protected static function createDatabaseManager(): DatabaseManager
@@ -43,12 +45,9 @@ class SqlsrvDriverTest extends AbstractDatabaseDriverTestCase
      */
     public static function setUpBeforeClass(): void
     {
-        // Give the container a chance to get ready
-        sleep(20);
-
         parent::setUpBeforeClass();
 
-        if (!static::$connection || static::$connection->getName() !== 'sqlsrv') {
+        if (!static::$connection) {
             self::markTestSkipped('SQL Server database not configured.');
         }
     }

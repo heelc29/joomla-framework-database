@@ -18,7 +18,7 @@ jobs:
         strategy:
             matrix:
                 php_version: ['8.3', '8.4', '8.5']
-                db_version: ['2017']
+                db_version: ['2017', '2025']
         steps:
             - uses: actions/checkout@v6
             - name: Prepare SQLSRV environment
@@ -29,9 +29,7 @@ jobs:
                   apt-get update
                   ACCEPT_EULA=Y apt-get install -y msodbcsql18 unixodbc-dev
                   pecl install sqlsrv && docker-php-ext-enable sqlsrv
-                  pecl install pdo_sqlsrv && docker-php-ext-enable pdo_sqlsrv
                   php --ri sqlsrv
-                  php --ri pdo_sqlsrv
             - name: Run Unit tests
               run: |
                   git config --global --add safe.directory $GITHUB_WORKSPACE
@@ -44,3 +42,5 @@ jobs:
                     ACCEPT_EULA: Y
                     MSSQL_SA_PASSWORD: Password12!
                     MSSQL_PID: Developer
+                options: >-
+                    --health-cmd="bash -c 'SQLCMD=$(command -v /opt/mssql-tools/bin/sqlcmd || command -v /opt/mssql-tools18/bin/sqlcmd); [ -z \"$SQLCMD\" ] && exit 1; $SQLCMD -S localhost -U sa -P Password12! -C -Q SELECT\ 1'"

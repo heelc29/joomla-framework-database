@@ -974,7 +974,7 @@ class SqlsrvQuery extends DatabaseQuery
                             // Add text before operator
                             $addBlock(substr($string, $start, $i - $start));
                             $colIdx++;
-                        } elseif (!isset($column[$colIdx]) && isset($operators[$previous])) {
+                        } elseif (!isset($column[$colIdx]) && isset($previous, $operators[$previous])) {
                             // Do not create whitespace between operators
                             $colIdx--;
                         }
