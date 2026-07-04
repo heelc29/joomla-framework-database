@@ -33,3 +33,5 @@ jobs:
                     POSTGRES_USER: joomla_ut
                     POSTGRES_PASSWORD: joomla_ut
                     POSTGRES_DB: joomla_ut
+                options: >-
+                    --health-cmd="pg_isready -d joomla_ut"

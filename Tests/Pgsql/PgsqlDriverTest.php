@@ -15,10 +15,12 @@ use Joomla\Database\Pgsql\PgsqlImporter;
 use Joomla\Database\Pgsql\PgsqlQuery;
 use Joomla\Database\Tests\AbstractDatabaseDriverTestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 
 /**
  * Test class for Joomla\Database\Pgsql\PgsqlDriver
  */
+#[RequiresPhpExtension('pdo_pgsql')]
 class PgsqlDriverTest extends AbstractDatabaseDriverTestCase
 {
     /**
@@ -28,12 +30,9 @@ class PgsqlDriverTest extends AbstractDatabaseDriverTestCase
      */
     public static function setUpBeforeClass(): void
     {
-        // Give the container a chance to get ready
-        sleep(20);
-
         parent::setUpBeforeClass();
 
-        if (!static::$connection || static::$connection->getName() !== 'pgsql') {
+        if (!static::$connection) {
             self::markTestSkipped('PostgreSQL database not configured.');
         }
     }
@@ -352,14 +351,7 @@ class PgsqlDriverTest extends AbstractDatabaseDriverTestCase
      */
     public function testGetConnectionEncryption()
     {
-        $expectedResult = '';
-
-        if (\getenv('TRAVIS') === 'true' && in_array(\getenv('PGSQL_VERSION'), ['9.5', '9.6', '10.0'])) {
-            $expectedResult = 'TLSv1.2 (ECDHE-RSA-AES256-GCM-SHA384)';
-        }
-
-        $this->assertSame(
-            $expectedResult,
+        $this->assertEmpty(
             static::$connection->getConnectionEncryption(),
             'The database connection is not encrypted by default'
         );
