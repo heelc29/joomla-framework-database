@@ -233,7 +233,7 @@ class SqliteDriverTest extends AbstractDatabaseDriverTestCase
      */
     public function testGetMinimum()
     {
-        $this->assertNull(
+        $this->assertEmpty(
             static::$connection->getMinimum(),
             'A minimum version is not specified for SQLite'
         );

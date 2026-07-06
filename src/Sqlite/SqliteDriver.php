@@ -39,6 +39,14 @@ class SqliteDriver extends PdoDriver
     protected $nameQuote = '`';
 
     /**
+     * The minimum supported database version.
+     *
+     * @var    string
+     * @since  __DEPLOY_VERSION__
+     */
+    protected static $dbMinimum = '';
+
+    /**
      * Destructor.
      *
      * @since   1.0
